@@ -91,9 +91,57 @@ describe('malformed table clipboard slices', () => {
     wrapper.innerHTML = sanitizeHTML(changePastedHTML(html));
     const slice = DOMParser.fromSchema(editor.schema).parseSlice(wrapper);
 
-    expect(() => changePastedSlice(slice, editor.schema, false)).not.toThrow();
-    expect(() => changePastedSlice(slice, editor.schema, true)).not.toThrow();
+    [false, true].forEach((isInTable) => {
+      const transformed = changePastedSlice(slice, editor.schema, isInTable);
+      const pasted = editor.view.state.apply(editor.view.state.tr.replaceSelection(transformed));
+      const typed = pasted.apply(pasted.tr.insertText('Still usable'));
+
+      expect(() => typed.doc.check()).not.toThrow();
+      expect(typed.doc.textContent).toContain('Still usable');
+    });
     expect(wrapper.querySelector('[onerror],script')).toBeNull();
+  });
+
+  it.each(['both', 'start', 'end'])(
+    'clamps open depths after removing malformed %s boundaries before selection replacement',
+    (boundary) => {
+      const { schema } = editor;
+      const empty = schema.nodes.table.create();
+      const text = schema.nodes.paragraph.create(null, schema.text('retained'));
+      const fragments: Record<string, Node[]> = {
+        both: [empty],
+        start: [empty, text],
+        end: [text, empty],
+      };
+      const original = Slice.maxOpen(Fragment.from(fragments[boundary]));
+      const transformed = changePastedSlice(original, schema, false);
+      const pasted = editor.view.state.apply(editor.view.state.tr.replaceSelection(transformed));
+
+      expect(() => pasted.doc.check()).not.toThrow();
+      expect(pasted.doc.textContent).toBe(boundary === 'both' ? '' : 'retained');
+      if (boundary === 'both') {
+        expect(transformed.openStart).toBe(0);
+        expect(transformed.openEnd).toBe(0);
+      }
+    }
+  );
+
+  it.each([
+    ['empty body', '<thead><tr><th>retained</th></tr></thead><tbody></tbody>'],
+    ['empty head', '<thead></thead><tbody><tr><td>retained</td></tr></tbody>'],
+    ['empty row', '<tbody><tr></tr><tr><td>retained</td></tr></tbody>'],
+  ])('parses HTML with an %s and retains usable neighboring cells', (_, html) => {
+    const wrapper = document.createElement('div');
+
+    wrapper.innerHTML = sanitizeHTML(changePastedHTML(`<table>${html}</table>`));
+    const parsed = DOMParser.fromSchema(editor.schema).parseSlice(wrapper);
+    const transformed = changePastedSlice(parsed, editor.schema, false);
+    const pasted = editor.view.state.apply(editor.view.state.tr.replaceSelection(transformed));
+    const typed = pasted.apply(pasted.tr.insertText('Still usable'));
+
+    expect(() => typed.doc.check()).not.toThrow();
+    expect(typed.doc.textContent).toContain('retained');
+    expect(typed.doc.textContent).toContain('Still usable');
   });
 
   it.each(['emptyHead', 'emptyBody', 'emptyRow', 'invalidCell'])(

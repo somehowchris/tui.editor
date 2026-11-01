@@ -20,7 +20,7 @@ export class TableBody extends NodeSchema {
           tag: 'tbody',
           getAttrs(dom: Node | string) {
             const rows = (dom as HTMLElement).querySelectorAll('tr');
-            const columns = rows[0].children.length;
+            const columns = rows[0]?.children.length ?? 0;
             const rawHTML = (dom as HTMLElement).getAttribute('data-raw-html');
 
             if (!columns) {

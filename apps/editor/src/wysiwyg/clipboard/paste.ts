@@ -179,5 +179,15 @@ export function changePastedSlice(slice: Slice, schema: Schema, isInTable: boole
     }
   });
 
-  return new Slice(Fragment.from(nodes), openStart, openEnd);
+  const fragment = Fragment.from(nodes);
+  // Filtering a malformed boundary table can remove the nodes which justified
+  // the parser's open depths. ProseMirror traverses that many boundary children
+  // when replacing a selection; stale depths on an empty/shorter fragment crash.
+  const maxOpen = Slice.maxOpen(fragment);
+
+  return new Slice(
+    fragment,
+    Math.min(openStart, maxOpen.openStart),
+    Math.min(openEnd, maxOpen.openEnd)
+  );
 }
