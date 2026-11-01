@@ -1,4 +1,4 @@
-import { Node, Schema, ResolvedPos, Slice, ProsemirrorNode } from 'prosemirror-model';
+import { Node, Schema, ResolvedPos, Slice, Fragment, ProsemirrorNode } from 'prosemirror-model';
 import { Selection, TextSelection } from 'prosemirror-state';
 
 import { findNodeBy } from '@/wysiwyg/helper/node';
@@ -115,11 +115,35 @@ export function getTableContentFromSlice(slice: Slice) {
       content = content.firstChild!.content;
     }
 
-    if (
-      content.firstChild!.type.name === 'tableHead' ||
-      content.firstChild!.type.name === 'tableBody'
-    ) {
-      return content;
+    // Sanitization and clipboard parsing can leave a table with no children,
+    // an empty section, or rows without cells. Both table-paste consumers need
+    // actual rows/cells before reading the first child or calculating columns.
+    const sections: Node[] = [];
+
+    content.forEach((section) => {
+      if (section.type.name !== 'tableHead' && section.type.name !== 'tableBody') {
+        return;
+      }
+      const rows: Node[] = [];
+
+      section.forEach((row) => {
+        if (row.type.name !== 'tableRow' || !row.childCount) {
+          return;
+        }
+        try {
+          row.check();
+        } catch {
+          return; // Invalid cells must not reach table geometry/copy helpers.
+        }
+        rows.push(row);
+      });
+      if (rows.length) {
+        sections.push(section.copy(Fragment.from(rows)));
+      }
+    });
+
+    if (sections.length) {
+      return Fragment.from(sections);
     }
   }
 

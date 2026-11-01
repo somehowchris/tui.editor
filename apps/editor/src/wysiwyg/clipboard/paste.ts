@@ -151,11 +151,10 @@ function createTableFromPastingTable(
   const [tableHeadRow] = rows;
   const tableBodyRows = rows.slice(1);
 
-  const nodes = [createTableHead(tableHeadRow, columnCount, schema)];
-
-  if (tableBodyRows.length) {
-    nodes.push(createTableBody(tableBodyRows, columnCount, schema));
-  }
+  const nodes = [
+    createTableHead(tableHeadRow, columnCount, schema),
+    createTableBody(tableBodyRows, columnCount, schema),
+  ];
 
   return schema.nodes.table.create(null, nodes);
 }
