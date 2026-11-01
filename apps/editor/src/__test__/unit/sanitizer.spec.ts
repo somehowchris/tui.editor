@@ -101,7 +101,7 @@ describe('sanitizeHTML', () => {
 
         expect(sanitizeHTML('<iframe src=""></iframe>')).toBe('<iframe src=""></iframe>');
         expect(sanitizeHTML('<embed type="image/jpg" src="">')).toBe(
-          '<embed src="" type="image/jpg">'
+          '<embed type="image/jpg" src="">'
         );
       });
 

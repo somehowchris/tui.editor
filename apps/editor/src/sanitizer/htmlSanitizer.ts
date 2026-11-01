@@ -1,4 +1,4 @@
-import DOMPurify from 'dompurify';
+import DOMPurify, { Config } from 'dompurify';
 import { includes } from '@/utils/common';
 
 const CAN_BE_WHITE_TAG_LIST = ['iframe', 'embed'];
@@ -12,8 +12,12 @@ export function registerTagWhitelistIfPossible(tagName: string) {
 
 export function sanitizeHTML<T extends string | HTMLElement | DocumentFragment = string>(
   html: string | Node,
-  options?: DOMPurify.Config
+  options?: Config
 ) {
+  // Unsupported DOM implementations otherwise receive their input unchanged.
+  if (!DOMPurify.isSupported) {
+    throw new Error('Safe HTML sanitization is unavailable in this browser');
+  }
   return DOMPurify.sanitize(html, {
     ADD_TAGS: whiteTagList,
     ADD_ATTR: ['rel', 'target', 'hreflang', 'type'],
