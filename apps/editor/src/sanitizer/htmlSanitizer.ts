@@ -14,6 +14,10 @@ export function sanitizeHTML<T extends string | HTMLElement | DocumentFragment =
   html: string | Node,
   options?: Config
 ) {
+  // Unsupported DOM implementations otherwise receive their input unchanged.
+  if (!DOMPurify.isSupported) {
+    throw new Error('Safe HTML sanitization is unavailable in this browser');
+  }
   return DOMPurify.sanitize(html, {
     ADD_TAGS: whiteTagList,
     ADD_ATTR: ['rel', 'target', 'hreflang', 'type'],

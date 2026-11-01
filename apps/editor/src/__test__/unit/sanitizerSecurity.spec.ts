@@ -1,6 +1,20 @@
 import { sanitizeHTML } from '@/sanitizer/htmlSanitizer';
+import DOMPurify from 'dompurify';
 
 describe('sanitizer boundary after HTML reparsing', () => {
+  it('rejects unsupported browsers instead of returning raw markup', () => {
+    const supported = DOMPurify.isSupported;
+
+    try {
+      DOMPurify.isSupported = false;
+      expect(() => sanitizeHTML('<img src=x onerror=alert(1)>')).toThrow(
+        'Safe HTML sanitization is unavailable'
+      );
+    } finally {
+      DOMPurify.isSupported = supported;
+    }
+  });
+
   const hostile = [
     '<img src="x" onerror="alert(1)"><script>alert(1)</script>',
     '<a href="javascript:alert(1)">link</a>',
