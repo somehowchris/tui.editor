@@ -2,6 +2,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const pkg = require('./package.json');
+const buildDate = require('./scripts/buildDate');
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
@@ -178,7 +179,7 @@ module.exports = (env) => {
           new webpack.BannerPlugin({
             banner: [
               pkg.name,
-              `@version ${pkg.version} | ${new Date().toDateString()}`,
+              `@version ${pkg.version} | ${buildDate()}`,
               `@author ${pkg.author}`,
               `@license ${pkg.license}`,
             ].join('\n'),

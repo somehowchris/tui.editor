@@ -5,6 +5,9 @@ import fs from 'fs';
 import banner from 'rollup-plugin-banner';
 import { version, author, license } from './package.json';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const buildDate = require('./scripts/buildDate');
+
 function i18nEditorImportPath() {
   return {
     name: 'i18nEditorImportPath',
@@ -20,7 +23,7 @@ function createBannerPlugin(type) {
   return banner(
     [
       `@toast-ui/editor${type ? ` : ${type}` : ''}`,
-      `@version ${version} | ${new Date().toDateString()}`,
+      `@version ${version} | ${buildDate()}`,
       `@author ${author}`,
       `@license ${license}`,
     ].join('\n')
